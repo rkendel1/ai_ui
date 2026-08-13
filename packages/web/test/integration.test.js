@@ -118,7 +118,9 @@ test("tool calls are rendered with lifecycle", async () => {
   await session.send("Search for AI");
 
   const finalState = states[states.length - 1];
-  assert.equal(finalState.activeToolCalls.length, 0, "All tool calls should be completed");
+  // PR5: Tool calls remain in state with completed status (first-class primitives)
+  assert.equal(finalState.activeToolCalls.length, 1, "Tool call should remain in state");
+  assert.equal(finalState.activeToolCalls[0].status, "completed", "Tool call should be completed");
   assert.equal(finalState.artifacts.length, 0, "No artifacts in this test");
 });
 
@@ -271,6 +273,7 @@ test("complex scenario: full conversation flow", async () => {
       status: state.status,
       messageCount: state.messages.length,
       toolCallsActive: state.activeToolCalls.length,
+      toolCallsCompleted: state.activeToolCalls.filter(c => c.status === "completed").length,
       content: state.messages[state.messages.length - 1]?.content
     });
   });
@@ -281,6 +284,8 @@ test("complex scenario: full conversation flow", async () => {
   const finalState = states[states.length - 1];
   assert.equal(finalState.status, "complete");
   assert.equal(finalState.messageCount, 2);
-  assert.equal(finalState.toolCallsActive, 0);
+  // Tool calls remain in state with completed status (PR5 first-class primitives)
+  assert.equal(finalState.toolCallsActive, 1);
+  assert.equal(finalState.toolCallsCompleted, 1);
   assert(finalState.content.includes("Found 5 results"));
 });

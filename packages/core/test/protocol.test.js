@@ -13,7 +13,12 @@ test("canonical protocol includes expected event types", () => {
     "tool.call.delta",
     "tool.call.completed",
     "tool.approval.required",
+    "tool.approved",
+    "tool.rejected",
     "artifact.created",
+    "artifact.updated",
+    "artifact.completed",
+    "artifact.failed",
     "citation.added",
     "message.completed",
     "error.occurred",
@@ -22,3 +27,4 @@ test("canonical protocol includes expected event types", () => {
 
   assert.equal(new Set(CANONICAL_EVENT_SEQUENCE).size, CANONICAL_EVENT_SEQUENCE.length);
 });
+

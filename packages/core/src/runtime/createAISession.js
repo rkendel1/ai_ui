@@ -72,18 +72,71 @@ export function createAISession({ transport, context, tools } = {}) {
         }
         break;
       }
-      case AI_EVENT_TYPES.TOOL_APPROVAL_REQUIRED:
+      case AI_EVENT_TYPES.TOOL_APPROVAL_REQUIRED: {
+        const toolCall = state.activeToolCalls.find((call) => call.id === event.id);
+        if (toolCall) {
+          toolCall.status = "approval_required";
+        }
         state.status = "waiting_for_approval";
         break;
-      case AI_EVENT_TYPES.TOOL_CALL_COMPLETED:
-        state.activeToolCalls = state.activeToolCalls.filter((call) => call.id !== event.id);
+      }
+      case AI_EVENT_TYPES.TOOL_APPROVED: {
+        const toolCall = state.activeToolCalls.find((call) => call.id === event.id);
+        if (toolCall) {
+          toolCall.status = "running";
+        }
         if (state.status === "waiting_for_approval") {
           state.status = "streaming";
         }
         break;
+      }
+      case AI_EVENT_TYPES.TOOL_REJECTED: {
+        const toolCall = state.activeToolCalls.find((call) => call.id === event.id);
+        if (toolCall) {
+          toolCall.status = "rejected";
+          toolCall.error = event.reason || "Tool was rejected";
+        }
+        if (state.status === "waiting_for_approval") {
+          state.status = "streaming";
+        }
+        break;
+      }
+      case AI_EVENT_TYPES.TOOL_CALL_COMPLETED: {
+        const toolCall = state.activeToolCalls.find((call) => call.id === event.id);
+        if (toolCall) {
+          toolCall.status = "completed";
+          toolCall.output = event.output;
+        }
+        if (state.status === "waiting_for_approval") {
+          state.status = "streaming";
+        }
+        break;
+      }
       case AI_EVENT_TYPES.ARTIFACT_CREATED:
         state.artifacts.push(event.artifact);
         break;
+      case AI_EVENT_TYPES.ARTIFACT_UPDATED: {
+        const artifact = state.artifacts.find((a) => a.id === event.artifactId);
+        if (artifact) {
+          Object.assign(artifact, event.changes);
+        }
+        break;
+      }
+      case AI_EVENT_TYPES.ARTIFACT_COMPLETED: {
+        const artifact = state.artifacts.find((a) => a.id === event.artifactId);
+        if (artifact) {
+          artifact.status = "completed";
+        }
+        break;
+      }
+      case AI_EVENT_TYPES.ARTIFACT_FAILED: {
+        const artifact = state.artifacts.find((a) => a.id === event.artifactId);
+        if (artifact) {
+          artifact.status = "failed";
+          artifact.error = event.error;
+        }
+        break;
+      }
       case AI_EVENT_TYPES.CITATION_ADDED:
         state.citations.push(event.citation);
         break;
