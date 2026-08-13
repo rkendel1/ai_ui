@@ -91,44 +91,5 @@ class AIUIPluginManager {
  */
 export const pluginManager = new AIUIPluginManager();
 
-/**
- * Plugin interface for TypeScript/documentation
- * 
- * interface AIUIPlugin {
- *   name: string;
- *   tools?: Array<{
- *     name: string;
- *     renderer: ToolRenderer;
- *   }>;
- *   artifacts?: Array<{
- *     type: string;
- *     renderer: ArtifactRenderer;
- *   }>;
- * }
- * 
- * Example:
- * 
- * const customerPlugin = {
- *   name: "customer-plugin",
- *   artifacts: [
- *     {
- *       type: "customer",
- *       renderer: {
- *         canHandle: (artifact) => artifact.type === "customer",
- *         render: (artifact) => {
- *           const div = document.createElement("div");
- *           div.innerHTML = `<h3>${artifact.title}</h3>`;
- *           return div;
- *         },
- *         export: (artifact) => {
- *           // Export logic
- *         }
- *       }
- *     }
- *   ]
- * };
- * 
- * pluginManager.register(customerPlugin);
- */
-
 export { AIUIPluginManager };
+export { createAIUIPlugin, createArtifactRenderer, createToolRenderer, createArtifactAction } from "./createAIUIPlugin.js";
