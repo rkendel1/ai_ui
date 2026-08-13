@@ -13,10 +13,11 @@ test("defineAIChatElement is exported and callable", () => {
   assert(mod instanceof Promise);
 });
 
-test("@ai-ui/web exports defineAIChatElement and defineAIComposerElement", async () => {
-  const { defineAIChatElement, defineAIComposerElement } = await import("../src/index.js");
+test("@ai-ui/web exports defineAIChatElement, defineAIComposerElement, and defineAIAttachmentsElement", async () => {
+  const { defineAIChatElement, defineAIComposerElement, defineAIAttachmentsElement } = await import("../src/index.js");
   assert.equal(typeof defineAIChatElement, "function");
   assert.equal(typeof defineAIComposerElement, "function");
+  assert.equal(typeof defineAIAttachmentsElement, "function");
 });
 
 test("Web component is safe to import in non-browser runtimes", async () => {
