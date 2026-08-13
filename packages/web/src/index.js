@@ -1,5 +1,7 @@
-export { defineAIChatElement } from "./ai-chat.js";
+export { defineAIChatElement } from "./components/ai-chat.js";
+export { defineAIComposerElement } from "./components/ai-composer.js";
 
-if (typeof window !== "undefined") {
+if (typeof customElements !== "undefined") {
   defineAIChatElement();
+  defineAIComposerElement();
 }
