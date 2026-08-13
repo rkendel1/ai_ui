@@ -12,6 +12,11 @@ export { JSONArtifactRenderer } from "./components/artifacts/json-renderer.js";
 export { CodeArtifactRenderer, TextArtifactRenderer } from "./components/artifacts/code-renderer.js";
 export { TableArtifactRenderer } from "./components/artifacts/table-renderer.js";
 
+// PR6: Composable workspace components
+export { defineAIWorkspaceElement } from "./components/ai-workspace.js";
+export { defineAIToolActivityElement } from "./components/tools/ai-tool-activity.js";
+export { defineAIArtifactsPanelElement } from "./components/ai-artifacts-panel.js";
+
 if (typeof customElements !== "undefined") {
   defineAIChatElement();
   defineAIComposerElement();
@@ -19,5 +24,8 @@ if (typeof customElements !== "undefined") {
   defineAIToolCallElement();
   defineAIToolApprovalElement();
   defineAIArtifactElement();
+  defineAIWorkspaceElement();
+  defineAIToolActivityElement();
+  defineAIArtifactsPanelElement();
 }
 
