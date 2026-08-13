@@ -59,6 +59,35 @@ session.subscribe((state) => {
 await session.send("Ask me anything");
 ```
 
+### Workspace (PR6)
+
+Compose multiple components into a unified workspace:
+
+```html
+<ai-workspace>
+  <ai-chat slot="chat">
+    <ai-composer slot="composer"></ai-composer>
+  </ai-chat>
+  <ai-artifacts-panel slot="artifacts"></ai-artifacts-panel>
+  <ai-tool-activity slot="tools"></ai-tool-activity>
+</ai-workspace>
+```
+
+```javascript
+import { createAISession } from "@ai-ui/core";
+
+const session = createAISession({ transport });
+document.querySelector("ai-workspace").session = session;
+
+// Workspace now displays:
+// - Chat messages and composer
+// - Artifact panel with generated artifacts
+// - Tool activity panel showing tool execution
+// All synchronized through shared session state
+```
+
+For detailed workspace documentation, see [PR6_WORKSPACE.md](./PR6_WORKSPACE.md)
+
 ## Features
 
 ### User Experience
