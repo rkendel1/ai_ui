@@ -13,3 +13,27 @@ export {
   createSafeRenderContext,
   safeStringifyJson
 } from "./security/index.js";
+export {
+  CAPABILITY_KEYS,
+  createCapabilities,
+  createModel,
+  createProviderMetadata,
+  ERROR_CODES,
+  createCapabilityError,
+  createInvalidCapabilitiesError,
+  createCapabilityNegotiationError,
+  createModelNotFoundError,
+  createProviderNotFoundError,
+  negotiateCapabilities,
+  hasCapability,
+  supportsAllCapabilities,
+  supportsAnyCapability,
+  filterModelsByCapabilities,
+  deriveRequirements,
+  requiresStreaming,
+  requiresTools,
+  requiresVision,
+  requiresStructuredOutput,
+  requiresAttachments,
+  requiresReasoning
+} from "./capabilities/index.js";

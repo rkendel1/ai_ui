@@ -1,4 +1,5 @@
 import { AI_EVENT_TYPES } from "../protocol/index.js";
+import { deriveRequirements, negotiateCapabilities } from "../capabilities/index.js";
 
 function cloneState(state) {
   return {
@@ -6,27 +7,31 @@ function cloneState(state) {
     messages: state.messages.map((message) => ({ ...message })),
     activeToolCalls: state.activeToolCalls.map((call) => ({ ...call })),
     artifacts: state.artifacts.map((artifact) => ({ ...artifact })),
-    citations: state.citations.map((citation) => ({ ...citation }))
+    citations: state.citations.map((citation) => ({ ...citation })),
+    model: state.model ? { ...state.model } : null,
+    capabilities: state.capabilities ? { ...state.capabilities } : null
   };
 }
 
-function createInitialState() {
+function createInitialState(model) {
   return {
     status: "idle",
     messages: [],
     activeToolCalls: [],
     artifacts: [],
     citations: [],
-    error: null
+    error: null,
+    model: model || null,
+    capabilities: model?.capabilities || null
   };
 }
 
-export function createAISession({ transport, context, tools } = {}) {
+export function createAISession({ transport, context, tools, model } = {}) {
   if (!transport || typeof transport.send !== "function") {
     throw new Error("createAISession requires a transport with a send(request) method");
   }
 
-  let state = createInitialState();
+  let state = createInitialState(model);
   let abortController = null;
   let lastUserMessage = null;
   const listeners = new Set();
@@ -160,27 +165,60 @@ export function createAISession({ transport, context, tools } = {}) {
   };
 
   const send = async (message) => {
-    const content = typeof message === "string" ? message : message?.message;
-    if (!content) {
+    // Support both string and object formats
+    const messageContent = typeof message === "string" ? message : message?.message;
+    const requestOptions = typeof message === "object" && message?.message ? message : {};
+
+    if (!messageContent) {
       throw new Error("session.send requires a message string");
     }
 
-    lastUserMessage = content;
+    lastUserMessage = messageContent;
     state.messages.push({
       id: `user-${Date.now()}`,
       role: "user",
-      content
+      content: messageContent
     });
     state.status = "streaming";
     state.error = null;
+
+    // Perform capability negotiation if model is provided
+    if (model && model.capabilities) {
+      const requirements = deriveRequirements({
+        message: messageContent,
+        ...requestOptions
+      });
+
+      const negotiation = negotiateCapabilities({
+        requested: requirements,
+        available: model.capabilities,
+        modelId: model.id,
+        providerId: model.provider
+      });
+
+      if (!negotiation.supported && negotiation.missing.length > 0) {
+        state.status = "error";
+        state.error = {
+          code: "capability_unsupported",
+          message: `Model does not support required capability: ${negotiation.missing[0]}`,
+          missing: negotiation.missing,
+          model: model.id,
+          provider: model.provider
+        };
+        notify();
+        throw new Error(state.error.message);
+      }
+    }
+
     notify();
 
     abortController = new AbortController();
 
     const stream = transport.send({
-      message: content,
+      message: messageContent,
       context,
       tools,
+      ...requestOptions,
       signal: abortController.signal
     });
 
@@ -213,7 +251,7 @@ export function createAISession({ transport, context, tools } = {}) {
       return send(lastUserMessage);
     },
     clear() {
-      state = createInitialState();
+      state = createInitialState(model);
       notify();
     },
     subscribe(listener) {
