@@ -1,0 +1,17 @@
+{
+  "name": "@ai-ui/llm-adapter",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./catalog": "./src/catalog.js",
+    "./router": "./src/router.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@ai-ui/core": "workspace:*"
+  }
+}
