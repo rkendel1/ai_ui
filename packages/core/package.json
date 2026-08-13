@@ -1,0 +1,14 @@
+{
+  "name": "@ai-ui/core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./protocol": "./src/protocol/index.js",
+    "./runtime": "./src/runtime/index.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}
