@@ -289,3 +289,72 @@ test("complex scenario: full conversation flow", async () => {
   assert.equal(finalState.toolCallsCompleted, 1);
   assert(finalState.content.includes("Found 5 results"));
 });
+
+// PR6: Workspace component tests
+test("AI workspace component exports are available", async () => {
+  const { defineAIWorkspaceElement, defineAIToolActivityElement, defineAIArtifactsPanelElement } = await import("../src/index.js");
+  assert.equal(typeof defineAIWorkspaceElement, "function");
+  assert.equal(typeof defineAIToolActivityElement, "function");
+  assert.equal(typeof defineAIArtifactsPanelElement, "function");
+});
+
+test("ai-tool-activity displays active tool calls", async () => {
+  const transport = createMockTransport([
+    { type: "session.started" },
+    { type: "message.started", messageId: "m1" },
+    { type: "tool.call.started", id: "t1", name: "search", input: { q: "test" } },
+    { type: "tool.call.completed", id: "t1", output: { results: 3 } },
+    { type: "text.delta", messageId: "m1", text: "Done" },
+    { type: "message.completed", messageId: "m1" },
+    { type: "session.completed" }
+  ]);
+
+  const session = createAISession({ transport });
+  await session.send("Search for something");
+
+  const state = session.getState();
+  assert.equal(state.activeToolCalls.length, 1);
+  assert.equal(state.activeToolCalls[0].name, "search");
+  assert.equal(state.activeToolCalls[0].status, "completed");
+});
+
+test("ai-artifacts-panel lists artifacts", async () => {
+  const transport = createMockTransport([
+    { type: "session.started" },
+    { type: "message.started", messageId: "m1" },
+    { type: "artifact.created", artifact: { id: "a1", type: "code", title: "Test Code", content: "function test() {}" } },
+    { type: "artifact.created", artifact: { id: "a2", type: "json", title: "Test JSON", content: { key: "value" } } },
+    { type: "text.delta", messageId: "m1", text: "Here are the artifacts" },
+    { type: "message.completed", messageId: "m1" },
+    { type: "session.completed" }
+  ]);
+
+  const session = createAISession({ transport });
+  await session.send("Create artifacts");
+
+  const state = session.getState();
+  assert.equal(state.artifacts.length, 2);
+  assert.equal(state.artifacts[0].type, "code");
+  assert.equal(state.artifacts[1].type, "json");
+});
+
+test("ai-workspace composes chat and panels", async () => {
+  const transport = createMockTransport([
+    { type: "session.started" },
+    { type: "message.started", messageId: "m1" },
+    { type: "tool.call.started", id: "t1", name: "analyze", input: { data: "test" } },
+    { type: "artifact.created", artifact: { id: "a1", type: "table", content: [] } },
+    { type: "tool.call.completed", id: "t1", output: { status: "done" } },
+    { type: "text.delta", messageId: "m1", text: "Analysis complete" },
+    { type: "message.completed", messageId: "m1" },
+    { type: "session.completed" }
+  ]);
+
+  const session = createAISession({ transport });
+  await session.send("Analyze this");
+
+  const state = session.getState();
+  assert.equal(state.messages.length, 2);
+  assert.equal(state.activeToolCalls.length, 1);
+  assert.equal(state.artifacts.length, 1);
+});
