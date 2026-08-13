@@ -1,0 +1,12 @@
+{"type":"session.started","timestamp":1694000000000}
+{"type":"message.started","messageId":"msg-1","timestamp":1694000000001}
+{"type":"text.delta","messageId":"msg-1","text":"The weather in San Francisco is currently ","timestamp":1694000000002}
+{"type":"text.delta","messageId":"msg-1","text":"72°F and sunny. ","timestamp":1694000000003}
+{"type":"tool.call.started","id":"tool-1","name":"get_weather","timestamp":1694000000004}
+{"type":"tool.call.delta","id":"tool-1","delta":"{\"location\":\"San Francisco\"}","timestamp":1694000000005}
+{"type":"tool.call.completed","id":"tool-1","output":{"temperature":72,"condition":"Sunny","humidity":65},"timestamp":1694000000006}
+{"type":"artifact.created","artifact":{"id":"artifact-1","type":"json","title":"Weather Data","content":{"location":"San Francisco","temperature":72,"condition":"Sunny","humidity":65},"status":"created"},"timestamp":1694000000007}
+{"type":"text.delta","messageId":"msg-1","text":"Humidity is at 65%. ","timestamp":1694000000008}
+{"type":"text.delta","messageId":"msg-1","text":"It's a great day to be outside!","timestamp":1694000000009}
+{"type":"message.completed","messageId":"msg-1","timestamp":1694000000010}
+{"type":"session.completed","timestamp":1694000000011}
