@@ -70,7 +70,7 @@ export const MarkdownArtifactRenderer = {
     const temp = document.createElement("div");
     temp.innerHTML = html; // This is safe because we only convert markdown
 
-    // Walk the tree and escape dangerous content
+    // Walk the tree and ensure safe links
     const walk = (node) => {
       for (let i = 0; i < node.childNodes.length; i++) {
         const child = node.childNodes[i];
@@ -87,10 +87,11 @@ export const MarkdownArtifactRenderer = {
             continue;
           }
 
-          // Sanitize links
+          // Sanitize links - only allow http, https, and relative URLs
           if (tag === "a" && child.href) {
-            if (!isValidUrl(child.href)) {
-              child.href = "javascript:void(0)";
+            if (!isValidMarkdownUrl(child.href)) {
+              child.href = "about:blank";
+              child.removeAttribute("target");
             }
           }
 
@@ -107,11 +108,15 @@ export const MarkdownArtifactRenderer = {
   }
 };
 
-function isValidUrl(url) {
+function isValidMarkdownUrl(url) {
   if (typeof url !== "string") return false;
   const lowerUrl = url.toLowerCase();
-  if (lowerUrl.startsWith("javascript:") || lowerUrl.startsWith("data:")) {
-    return false;
+  const dangerousProtocols = ["javascript:", "data:", "vbscript:", "file://"];
+  for (const protocol of dangerousProtocols) {
+    if (lowerUrl.startsWith(protocol)) {
+      return false;
+    }
   }
   return true;
 }
+
