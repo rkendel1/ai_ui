@@ -8,6 +8,8 @@ One component for chat. A universal protocol for AI interactions. Beautiful defa
 
 - `@ai-ui/core` — provider-neutral interaction protocol and headless runtime
 - `@ai-ui/web` — framework-independent Web Components
+- `@ai-ui/react` — React hooks and components (PR8)
+- `@ai-ui/core/transports` — Universal HTTP streaming transport (PR9)
 
 ## Quick Start
 
@@ -19,16 +21,54 @@ One component for chat. A universal protocol for AI interactions. Beautiful defa
 <ai-composer slot="composer"></ai-composer>
 ```
 
-### With a Transport
+### With a Universal HTTP Transport (PR9)
 
 ```javascript
+import { createAITransport } from "@ai-ui/core/transports";
 import { createAISession } from "@ai-ui/core";
 import { defineAIChatElement } from "@ai-ui/web";
 
 // Define the components
 defineAIChatElement();
 
-// Create a session with your transport
+// Create a universal HTTP streaming transport
+const transport = createAITransport("/api/ai");
+
+// Create a session with the transport
+const session = createAISession({ transport });
+
+// Connect it to the UI
+document.querySelector("ai-chat").session = session;
+
+// Send a message
+await session.send("Hello!");
+```
+
+### With React (PR8)
+
+```javascript
+import { useAISession } from "@ai-ui/react";
+import { createAITransport } from "@ai-ui/core/transports";
+
+export default function ChatApp() {
+  const { session, state, send } = useAISession({
+    transport: createAITransport("/api/ai")
+  });
+
+  return (
+    <div>
+      <div>{state.messages.map(m => <div key={m.id}>{m.content}</div>)}</div>
+      <button onClick={() => send("Hello!")}>Send</button>
+    </div>
+  );
+}
+```
+
+### Custom Transport
+
+```javascript
+import { createAISession } from "@ai-ui/core";
+
 const session = createAISession({
   transport: myTransport,
   context: { userId: "user-123" }
@@ -39,24 +79,6 @@ document.querySelector("ai-chat").session = session;
 
 // Send a message
 await session.send("Hello!");
-```
-
-### Headless API
-
-Don't want the UI? Use the protocol directly:
-
-```javascript
-import { createAISession } from "@ai-ui/core";
-
-const session = createAISession({ transport });
-
-session.subscribe((state) => {
-  console.log("Status:", state.status);
-  console.log("Messages:", state.messages);
-  console.log("Active tools:", state.activeToolCalls);
-});
-
-await session.send("Ask me anything");
 ```
 
 ### Workspace (PR6)
@@ -87,6 +109,38 @@ document.querySelector("ai-workspace").session = session;
 ```
 
 For detailed workspace documentation, see [PR6_WORKSPACE.md](./PR6_WORKSPACE.md)
+
+### React Integration (PR8)
+
+Use AI UI with React hooks and components:
+
+```jsx
+import { useAISession, AIWorkspace } from "@ai-ui/react";
+import { createAITransport } from "@ai-ui/core/transports";
+
+export default function App() {
+  const { session, state } = useAISession({
+    transport: createAITransport("/api/ai")
+  });
+  
+  return <AIWorkspace session={session} state={state} />;
+}
+```
+
+For detailed React integration documentation, see [PR8_REACT_INTEGRATION.md](./PR8_REACT_INTEGRATION.md)
+
+### Universal HTTP Streaming Transport (PR9)
+
+Connect to any HTTP-based AI backend with a single function:
+
+```javascript
+const transport = createAITransport("/api/ai");
+const session = createAISession({ transport });
+```
+
+Supports NDJSON and Server-Sent Events streaming formats. Perfect for production deployments.
+
+For detailed transport documentation, see [PR9_UNIVERSAL_STREAMING_TRANSPORT.md](./PR9_UNIVERSAL_STREAMING_TRANSPORT.md)
 
 ## Features
 
@@ -315,7 +369,23 @@ interface AIRequest {
 }
 ```
 
-### Example: OpenAI Transport (Pseudo-code)
+**Or use the universal HTTP transport (PR9):**
+
+```javascript
+import { createAITransport } from "@ai-ui/core/transports";
+
+// Simple HTTP streaming to any backend
+const transport = createAITransport("/api/ai");
+
+// Or with options
+const transport = createAITransport("https://api.example.com/chat", {
+  format: "sse",  // or "ndjson"
+  timeout: 60000,
+  headers: { "Authorization": "token" }
+});
+```
+
+### Example: Custom Transport
 
 ```javascript
 const transport = {
