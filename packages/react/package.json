@@ -1,0 +1,19 @@
+{
+  "name": "@ai-ui/react",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./hooks": "./src/hooks/index.js"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0"
+  },
+  "dependencies": {
+    "@ai-ui/core": "workspace:*"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}
