@@ -10,6 +10,7 @@ One component for chat. A universal protocol for AI interactions. Beautiful defa
 - `@ai-ui/web` — framework-independent Web Components
 - `@ai-ui/react` — React hooks and components (PR8)
 - `@ai-ui/core/transports` — Universal HTTP streaming transport (PR9)
+- `@ai-ui/runtime` — Reference AI runtime and provider adapters (PR10)
 
 ## Quick Start
 
@@ -141,6 +142,54 @@ const session = createAISession({ transport });
 Supports NDJSON and Server-Sent Events streaming formats. Perfect for production deployments.
 
 For detailed transport documentation, see [PR9_UNIVERSAL_STREAMING_TRANSPORT.md](./PR9_UNIVERSAL_STREAMING_TRANSPORT.md)
+
+### Reference AI Runtime + Adapters (PR10)
+
+Complete end-to-end implementation with:
+
+- **@ai-ui/runtime** — Core runtime with event translation
+- **OpenAI-compatible adapter** — Works with OpenAI, OpenRouter, vLLM, Ollama, etc.
+- **Mock provider** — Zero-key development without API keys
+- **Reference application** — Full-stack demo (`apps/reference/`)
+
+Get started in seconds:
+
+```bash
+cd apps/reference
+npm install
+npm run dev
+# Open http://localhost:3000
+```
+
+This demonstrates:
+- Complete protocol lifecycle (session → message → tool → artifact → completion)
+- Real streaming responses
+- Tool calls with approval workflow
+- Artifact generation
+- Custom renderers
+- Error handling
+- Cancellation
+
+Switch providers with environment variables only:
+
+```bash
+# Mock provider (default, no keys needed)
+npm run dev
+
+# OpenAI
+AI_BASE_URL=https://api.openai.com/v1 \
+AI_API_KEY=sk-... \
+AI_MODEL=gpt-4 \
+npm run dev
+
+# OpenRouter, Ollama, LM Studio, or any OpenAI-compatible endpoint
+AI_BASE_URL=https://openrouter.ai/api/v1 \
+AI_API_KEY=... \
+AI_MODEL=gpt-3.5-turbo \
+npm run dev
+```
+
+For detailed runtime documentation, see [PR10_REFERENCE_RUNTIME.md](./PR10_REFERENCE_RUNTIME.md)
 
 ## Features
 

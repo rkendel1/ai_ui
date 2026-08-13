@@ -1,0 +1,14 @@
+{
+  "name": "ai-ui-reference",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node src/api/server.js",
+    "build": "echo 'Reference app is server-side only'"
+  },
+  "dependencies": {
+    "@ai-ui/core": "workspace:*",
+    "@ai-ui/runtime": "workspace:*"
+  },
+  "devDependencies": {}
+}
