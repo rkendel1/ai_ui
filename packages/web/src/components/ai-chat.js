@@ -465,7 +465,7 @@ class AIChatElement extends HTMLElementBase {
     if (!this._state) return;
 
     const container = this.shadowRoot.querySelector('[part="messages-container"]');
-    const { messages, status, error, activeToolCalls } = this._state;
+    const { messages, status, error, activeToolCalls, artifacts } = this._state;
 
     if (messages.length === 0) {
       container.innerHTML = `
@@ -486,13 +486,16 @@ class AIChatElement extends HTMLElementBase {
       this._renderErrorBanner();
     }
 
-    // Render messages
-    const messageHTML = messages.map((message, index) => {
-      const isStreaming = status === "streaming" && index === messages.length - 1 && message.role === "assistant";
-      return this._renderMessage(message, isStreaming);
-    }).join("");
+    // Clear container
+    container.innerHTML = "";
 
-    container.innerHTML = messageHTML;
+    // Render messages
+    messages.forEach((message, index) => {
+      const isStreaming = status === "streaming" && index === messages.length - 1 && message.role === "assistant";
+      const messageEl = document.createElement("div");
+      messageEl.innerHTML = this._renderMessage(message, isStreaming);
+      container.appendChild(messageEl.firstElementChild);
+    });
 
     // Show new response indicator if not at bottom
     if (this._isUserScrolling && status === "streaming") {
@@ -510,10 +513,20 @@ class AIChatElement extends HTMLElementBase {
       container.appendChild(indicator);
     }
 
-    // Render tool calls
-    if (activeToolCalls.length > 0) {
-      const toolsHTML = activeToolCalls.map((call) => this._renderToolCall(call)).join("");
-      container.innerHTML += toolsHTML;
+    // Render tool calls using first-class component
+    if (activeToolCalls && activeToolCalls.length > 0) {
+      activeToolCalls.forEach((call) => {
+        const toolEl = this._createToolCallElement(call);
+        container.appendChild(toolEl);
+      });
+    }
+
+    // Render artifacts using first-class component
+    if (artifacts && artifacts.length > 0) {
+      artifacts.forEach((artifact) => {
+        const artifactEl = this._createArtifactElement(artifact);
+        container.appendChild(artifactEl);
+      });
     }
   }
 
@@ -583,7 +596,62 @@ class AIChatElement extends HTMLElementBase {
   }
 
   /**
-   * Render a tool call
+   * Create a tool call element using first-class component
+   */
+  _createToolCallElement(toolCall) {
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = "margin: 12px 0;";
+    
+    // Create tool call element
+    const toolEl = document.createElement("ai-tool-call");
+    toolEl.setAttribute("tool-id", toolCall.id);
+    toolEl.setAttribute("tool-name", toolCall.name);
+    toolEl.setAttribute("tool-status", toolCall.status || "pending");
+    
+    if (toolCall.input) {
+      toolEl.setAttribute("tool-input", JSON.stringify(toolCall.input));
+    }
+    if (toolCall.output) {
+      toolEl.setAttribute("tool-output", JSON.stringify(toolCall.output));
+    }
+    if (toolCall.error) {
+      toolEl.setAttribute("tool-error", JSON.stringify(toolCall.error));
+    }
+    
+    wrapper.appendChild(toolEl);
+    return wrapper;
+  }
+
+  /**
+   * Create an artifact element using first-class component
+   */
+  _createArtifactElement(artifact) {
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = "margin: 12px 0;";
+    
+    // Create artifact element
+    const artifactEl = document.createElement("ai-artifact");
+    artifactEl.setAttribute("artifact-id", artifact.id);
+    artifactEl.setAttribute("artifact-type", artifact.type);
+    
+    if (artifact.title) {
+      artifactEl.setAttribute("artifact-title", artifact.title);
+    }
+    
+    if (artifact.content) {
+      artifactEl.setAttribute("artifact-content", JSON.stringify(artifact.content));
+    }
+    
+    if (artifact.metadata) {
+      artifactEl.setAttribute("artifact-metadata", JSON.stringify(artifact.metadata));
+    }
+    
+    wrapper.appendChild(artifactEl);
+    return wrapper;
+  }
+
+  /**
+   * Render a tool call (deprecated - now uses _createToolCallElement)
    */
   _renderToolCall(toolCall) {
     return `
@@ -635,7 +703,7 @@ class AIChatElement extends HTMLElementBase {
   }
 
   /**
-   * Render approval dialog
+   * Render approval dialog using first-class component
    */
   _renderApprovalDialog() {
     if (!this._state || !this._state.activeToolCalls.some(c => c.status === "approval_required")) {
@@ -653,41 +721,32 @@ class AIChatElement extends HTMLElementBase {
 
     const dialog = document.createElement("div");
     dialog.setAttribute("part", "approval-dialog");
-    dialog.setAttribute("role", "alertdialog");
-    dialog.setAttribute("aria-label", "Approval required");
-    const reasonText = this._escapeHtml(pendingCall.reason || `The AI wants to perform: ${pendingCall.name}`);
-    dialog.innerHTML = `
-      <div part="approval-content">
-        <div style="font-weight: 600; font-size: 16px; margin-bottom: 12px;">
-          Approval Required
-        </div>
-        <div style="margin-bottom: 20px; line-height: 1.6;">
-          ${reasonText}
-        </div>
-        <div part="approval-actions">
-          <button aria-label="Reject this action" style="background-color: transparent;">
-            Cancel
-          </button>
-          <button data-approve aria-label="Approve this action" style="">
-            Approve
-          </button>
-        </div>
-      </div>
-    `;
 
-    const cancelBtn = dialog.querySelector('button:first-child');
-    const approveBtn = dialog.querySelector('[data-approve]');
+    // Create approval element
+    const approvalEl = document.createElement("ai-tool-approval");
+    approvalEl.setAttribute("tool-id", pendingCall.id);
+    approvalEl.setAttribute("tool-name", pendingCall.name);
+    
+    if (pendingCall.reason) {
+      approvalEl.setAttribute("reason", pendingCall.reason);
+    }
+    
+    if (pendingCall.input) {
+      approvalEl.setAttribute("input", JSON.stringify(pendingCall.input));
+    }
 
-    cancelBtn.addEventListener("click", () => {
-      this.reject(pendingCall.id);
+    // Listen for approval events
+    approvalEl.addEventListener("ai-approval-approved", (e) => {
+      this.approve(e.detail.toolCallId);
       dialog.remove();
     });
 
-    approveBtn.addEventListener("click", () => {
-      this.approve(pendingCall.id);
+    approvalEl.addEventListener("ai-approval-rejected", (e) => {
+      this.reject(e.detail.toolCallId);
       dialog.remove();
     });
 
+    dialog.appendChild(approvalEl);
     this.shadowRoot.appendChild(dialog);
   }
 

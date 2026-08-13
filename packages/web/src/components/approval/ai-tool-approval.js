@@ -17,6 +17,22 @@ class AIToolApprovalElement extends HTMLElementBase {
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
     }
+    
+    // Initialize from attributes if _toolCall is not set
+    if (!this._toolCall) {
+      const toolId = this.getAttribute("tool-id");
+      const toolName = this.getAttribute("tool-name");
+      const reason = this.getAttribute("reason");
+      const input = this.getAttribute("input");
+      
+      this._toolCall = {
+        id: toolId,
+        name: toolName,
+        reason: reason,
+        input: input ? JSON.parse(input) : undefined
+      };
+    }
+    
     this._render();
     this._setupEventListeners();
   }

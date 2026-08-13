@@ -17,6 +17,26 @@ class AIToolCallElement extends HTMLElementBase {
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
     }
+    
+    // Initialize from attributes if _toolCall is not set
+    if (!this._toolCall) {
+      const toolId = this.getAttribute("tool-id");
+      const toolName = this.getAttribute("tool-name");
+      const toolStatus = this.getAttribute("tool-status") || "pending";
+      const toolInput = this.getAttribute("tool-input");
+      const toolOutput = this.getAttribute("tool-output");
+      const toolError = this.getAttribute("tool-error");
+      
+      this._toolCall = {
+        id: toolId,
+        name: toolName,
+        status: toolStatus,
+        input: toolInput ? JSON.parse(toolInput) : undefined,
+        output: toolOutput ? JSON.parse(toolOutput) : undefined,
+        error: toolError ? JSON.parse(toolError) : undefined
+      };
+    }
+    
     this._render();
     this._setupEventListeners();
   }

@@ -172,8 +172,14 @@
         <button class="demo-btn" onclick="runDemo('reasoning')">
           🤔 Reasoning State
         </button>
-        <button class="demo-btn" onclick="runDemo('tools')">
-          🔧 Tool Calls
+        <button class="demo-btn" onclick="runDemo('approval')">
+          ✓ Tool Approval Flow
+        </button>
+        <button class="demo-btn" onclick="runDemo('artifacts')">
+          📦 Artifacts & Renderers
+        </button>
+        <button class="demo-btn" onclick="runDemo('custom')">
+          🎨 Custom Renderer
         </button>
         <button class="demo-btn" onclick="runDemo('error')">
           ⚠️ Error Handling
@@ -191,7 +197,10 @@
         ✓ Streaming tokens<br>
         ✓ Markdown rendering<br>
         ✓ Code blocks<br>
-        ✓ Tool calls<br>
+        ✓ Tool calls (PR5)<br>
+        ✓ Tool approval (PR5)<br>
+        ✓ Artifacts (PR5)<br>
+        ✓ Custom renderers (PR5)<br>
         ✓ Reasoning UI<br>
         ✓ Error recovery<br>
         ✓ Auto-scroll<br>
@@ -207,13 +216,61 @@
 
   <script type="module">
     import { defineAIChatElement, defineAIComposerElement, defineAIAttachmentsElement } from "../packages/web/src/index.js";
-    import { createAISession } from "../packages/core/src/index.js";
+    import { createAISession, artifactRegistry, pluginManager } from "../packages/core/src/index.js";
     import { createMockTransport } from "../packages/core/test/mock-transport.js";
 
     // Define components
     defineAIChatElement();
     defineAIComposerElement();
     defineAIAttachmentsElement();
+
+    // Register custom renderer for customer artifacts
+    const CustomerRenderer = {
+      canHandle: (artifact) => artifact.type === "customer",
+      render: (artifact) => {
+        const div = document.createElement("div");
+        div.style.cssText = `
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 12px 0;
+        `;
+        const customer = artifact.content;
+        div.innerHTML = `
+          <div style="font-size: 18px; font-weight: 600; margin-bottom: 12px;">${customer.name}</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+              <div style="opacity: 0.8; font-size: 12px;">Email</div>
+              <div style="font-weight: 500;">${customer.email}</div>
+            </div>
+            <div>
+              <div style="opacity: 0.8; font-size: 12px;">Plan</div>
+              <div style="font-weight: 500;">${customer.plan}</div>
+            </div>
+            <div>
+              <div style="opacity: 0.8; font-size: 12px;">MRR</div>
+              <div style="font-weight: 500;">$${customer.mrr.toLocaleString()}</div>
+            </div>
+            <div>
+              <div style="opacity: 0.8; font-size: 12px;">Health</div>
+              <div style="font-weight: 500;">${customer.health}</div>
+            </div>
+          </div>
+        `;
+        return div;
+      },
+      export: (artifact) => {
+        const json = JSON.stringify(artifact.content, null, 2);
+        const blob = new Blob([json], { type: "application/json" });
+        return {
+          filename: `customer-${artifact.content.id}.json`,
+          blob
+        };
+      }
+    };
+
+    artifactRegistry.register("customer", CustomerRenderer);
 
     const chatEl = document.querySelector("ai-chat");
     const composerEl = document.querySelector("ai-composer");
@@ -278,6 +335,84 @@
         { type: "session.completed" }
       ],
 
+      approval: () => [
+        { type: "session.started" },
+        { type: "message.started", messageId: "m1" },
+        { type: "text.delta", messageId: "m1", text: "I'll delete that file for you. " },
+        { type: "tool.call.started", id: "t1", name: "delete_file", input: { path: "/data/archive.zip", size: "2.4GB" } },
+        { type: "tool.approval.required", id: "t1", reason: "This will permanently delete 2.4GB file" },
+        // Simulate approval after delay
+        { type: "tool.approved", id: "t1" },
+        { type: "text.delta", messageId: "m1", text: "File deletion approved. " },
+        { type: "tool.call.completed", id: "t1", output: { deleted: true, size: "2.4GB" } },
+        { type: "text.delta", messageId: "m1", text: "Successfully deleted archive.zip." },
+        { type: "message.completed", messageId: "m1" },
+        { type: "session.completed" }
+      ],
+
+      artifacts: () => [
+        { type: "session.started" },
+        { type: "message.started", messageId: "m1" },
+        { type: "text.delta", messageId: "m1", text: "Here's your customer analysis:\n\n" },
+        {
+          type: "artifact.created",
+          artifact: {
+            id: "a1",
+            type: "table",
+            title: "Customer Q3 Performance",
+            content: [
+              { name: "Acme Corp", revenue: "$4.2M", growth: "12%", status: "Active" },
+              { name: "Globex Inc", revenue: "$2.8M", growth: "8%", status: "Active" },
+              { name: "Initech", revenue: "$1.9M", growth: "15%", status: "Growing" }
+            ]
+          }
+        },
+        { type: "text.delta", messageId: "m1", text: "\nSummary:\n\n" },
+        {
+          type: "artifact.created",
+          artifact: {
+            id: "a2",
+            type: "json",
+            title: "Analysis Summary",
+            content: {
+              totalCustomers: 3,
+              avgRevenue: "$2.97M",
+              avgGrowth: "11.67%",
+              topPerformer: "Initech",
+              recommendation: "Focus on Initech for market expansion"
+            }
+          }
+        },
+        { type: "text.delta", messageId: "m1", text: "All done!" },
+        { type: "message.completed", messageId: "m1" },
+        { type: "session.completed" }
+      ],
+
+      custom: () => [
+        { type: "session.started" },
+        { type: "message.started", messageId: "m1" },
+        { type: "text.delta", messageId: "m1", text: "Here's your customer profile:\n\n" },
+        {
+          type: "artifact.created",
+          artifact: {
+            id: "a1",
+            type: "customer",
+            title: "Customer Profile - Acme Corp",
+            content: {
+              id: "cust_123",
+              name: "Acme Corporation",
+              email: "contact@acme.com",
+              plan: "Enterprise",
+              mrr: 45000,
+              health: "excellent"
+            }
+          }
+        },
+        { type: "text.delta", messageId: "m1", text: "This is a custom renderer demo!" },
+        { type: "message.completed", messageId: "m1" },
+        { type: "session.completed" }
+      ]
+
       error: () => [
         { type: "session.started" },
         { type: "message.started", messageId: "m1" },
@@ -326,6 +461,9 @@
         markdown: "How do you render markdown?",
         reasoning: "Explain your reasoning",
         tools: "Search for AI trends in 2024",
+        approval: "Delete archive.zip for me",
+        artifacts: "Analyze our customers",
+        custom: "Show me a customer profile",
         error: "Try something that fails",
         long: "Write a long response"
       }[demoName];

@@ -22,6 +22,24 @@ class AIArtifactElement extends HTMLElementBase {
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
     }
+    
+    // Initialize from attributes if _artifact is not set
+    if (!this._artifact) {
+      const artifactId = this.getAttribute("artifact-id");
+      const artifactType = this.getAttribute("artifact-type");
+      const artifactTitle = this.getAttribute("artifact-title");
+      const artifactContent = this.getAttribute("artifact-content");
+      const artifactMetadata = this.getAttribute("artifact-metadata");
+      
+      this._artifact = {
+        id: artifactId,
+        type: artifactType,
+        title: artifactTitle,
+        content: artifactContent ? JSON.parse(artifactContent) : undefined,
+        metadata: artifactMetadata ? JSON.parse(artifactMetadata) : undefined
+      };
+    }
+    
     this._render();
     this._setupEventListeners();
   }
