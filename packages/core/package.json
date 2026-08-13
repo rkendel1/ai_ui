@@ -9,6 +9,7 @@
     "./runtime": "./src/runtime/index.js",
     "./transports": "./src/transports/index.js",
     "./capabilities": "./src/capabilities/index.js",
+    "./routing": "./src/routing/index.js",
     "./test/mock-transport": "./test/mock-transport.js"
   },
   "scripts": {

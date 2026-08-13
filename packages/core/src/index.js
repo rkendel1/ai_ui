@@ -37,3 +37,30 @@ export {
   requiresAttachments,
   requiresReasoning
 } from "./capabilities/index.js";
+
+export {
+  ROUTING_ERROR_CODES,
+  ROUTING_POLICY_NAMES,
+  createRoutingError,
+  createNoModelSelectedError,
+  createInvalidSelectorError,
+  createNoSuitableModelError,
+  createModelFallbackExhaustedError,
+  createCatalogNotProvidedError,
+  createPolicyEvaluationError,
+  createInvalidPolicyError,
+  BUILT_IN_POLICIES,
+  autoPolicyEvaluate,
+  fastPolicyEvaluate,
+  cheapPolicyEvaluate,
+  reasoningPolicyEvaluate,
+  visionPolicyEvaluate,
+  localPolicyEvaluate,
+  selectModel,
+  selectModelFromCandidates,
+  isPredefinedPolicy,
+  isExplicitModelId,
+  executeWithFallback,
+  buildFallbackChain,
+  createFallbackConfig
+} from "./routing/index.js";
