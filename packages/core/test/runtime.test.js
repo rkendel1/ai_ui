@@ -38,7 +38,9 @@ test("createAISession streams events into state", async () => {
   assert.equal(state.status, "complete");
   assert.equal(state.messages[0].role, "user");
   assert.equal(state.messages[1].content, "Hello world");
-  assert.equal(state.activeToolCalls.length, 0);
+  // PR5: Tool calls remain in state with completed status (first-class primitives)
+  assert.equal(state.activeToolCalls.length, 1);
+  assert.equal(state.activeToolCalls[0].status, "completed");
   assert.equal(state.artifacts.length, 1);
   assert.equal(state.citations.length, 1);
 });

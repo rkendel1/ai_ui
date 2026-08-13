@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.js",
     "./protocol": "./src/protocol/index.js",
-    "./runtime": "./src/runtime/index.js"
+    "./runtime": "./src/runtime/index.js",
+    "./test/mock-transport": "./test/mock-transport.js"
   },
   "scripts": {
     "test": "node --test"

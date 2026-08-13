@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI UI Playground</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      max-height: 90vh;
+    }
+
+    .chat-area {
+      display: flex;
+      flex-direction: column;
+      min-height: 600px;
+    }
+
+    ai-chat {
+      flex: 1;
+      min-height: 500px;
+    }
+
+    ai-composer {
+      flex-shrink: 0;
+    }
+
+    .sidebar {
+      background: #f8f9fa;
+      padding: 20px;
+      border-left: 1px solid #e5e7eb;
+      overflow-y: auto;
+      max-height: 100%;
+    }
+
+    .sidebar h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #111827;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .demo-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .demo-btn {
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    .demo-btn:hover {
+      background: #f3f4f6;
+      border-color: #9ca3af;
+    }
+
+    .demo-btn:active {
+      transform: scale(0.98);
+    }
+
+    .info-section {
+      background: white;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+
+    .info-section strong {
+      color: #111827;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .header {
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .header p {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+        max-height: 100vh;
+      }
+
+      .sidebar {
+        border-left: none;
+        border-top: 1px solid #e5e7eb;
+      }
+
+      .header {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="chat-area">
+      <div class="header">
+        <h1>AI UI Playground</h1>
+        <p>Try the streaming chat experience</p>
+      </div>
+      <ai-chat></ai-chat>
+      <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; border-top: 1px solid #e5e7eb;">
+        <ai-attachments></ai-attachments>
+        <ai-composer slot="composer"></ai-composer>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <h3>Demo Scenarios</h3>
+      <div class="demo-buttons">
+        <button class="demo-btn" onclick="runDemo('streaming')">
+          📝 Streaming Response
+        </button>
+        <button class="demo-btn" onclick="runDemo('markdown')">
+          📋 Markdown & Code
+        </button>
+        <button class="demo-btn" onclick="runDemo('reasoning')">
+          🤔 Reasoning State
+        </button>
+        <button class="demo-btn" onclick="runDemo('approval')">
+          ✓ Tool Approval Flow
+        </button>
+        <button class="demo-btn" onclick="runDemo('artifacts')">
+          📦 Artifacts & Renderers
+        </button>
+        <button class="demo-btn" onclick="runDemo('custom')">
+          🎨 Custom Renderer
+        </button>
+        <button class="demo-btn" onclick="runDemo('error')">
+          ⚠️ Error Handling
+        </button>
+        <button class="demo-btn" onclick="runDemo('long')">
+          📚 Long Response
+        </button>
+        <button class="demo-btn" onclick="runDemo('clear')">
+          🗑️ Clear Chat
+        </button>
+      </div>
+
+      <h3>Features</h3>
+      <div class="info-section">
+        ✓ Streaming tokens<br>
+        ✓ Markdown rendering<br>
+        ✓ Code blocks<br>
+        ✓ Tool calls (PR5)<br>
+        ✓ Tool approval (PR5)<br>
+        ✓ Artifacts (PR5)<br>
+        ✓ Custom renderers (PR5)<br>
+        ✓ Reasoning UI<br>
+        ✓ Error recovery<br>
+        ✓ Auto-scroll<br>
+        ✓ Accessible
+      </div>
+
+      <h3>How It Works</h3>
+      <div class="info-section">
+        This playground uses a mock transport that streams simulated AI responses. Type a message and hit Enter to see the component in action.
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { defineAIChatElement, defineAIComposerElement, defineAIAttachmentsElement } from "../packages/web/src/index.js";
+    import { createAISession, artifactRegistry, pluginManager } from "../packages/core/src/index.js";
+    import { createMockTransport } from "../packages/core/test/mock-transport.js";
+
+    // Define components
+    defineAIChatElement();
+    defineAIComposerElement();
+    defineAIAttachmentsElement();
+
+    // Register custom renderer for customer artifacts
+    const CustomerRenderer = {
+      canHandle: (artifact) => artifact.type === "customer",
+      render: (artifact) => {
+        const div = document.createElement("div");
+        div.style.cssText = `
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 12px 0;
+        `;
+        const customer = artifact.content;
+        div.innerHTML = `
+          <div style="font-size: 18px; font-weight: 600; margin-bottom: 12px;">${customer.name}</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+              <div style="opacity: 0.8; font-size: 12px;">Email</div>
+              <div style="font-weight: 500;">${customer.email}</div>
+            </div>
+            <div>
+              <div style="opacity: 0.8; font-size: 12px;">Plan</div>
+              <div style="font-weight: 500;">${customer.plan}</div>
+            </div>
+            <div>
+              <div style="opacity: 0.8; font-size: 12px;">MRR</div>
+              <div style="font-weight: 500;">$${customer.mrr.toLocaleString()}</div>
+            </div>
+            <div>
+              <div style="opacity: 0.8; font-size: 12px;">Health</div>
+              <div style="font-weight: 500;">${customer.health}</div>
+            </div>
+          </div>
+        `;
+        return div;
+      },
+      export: (artifact) => {
+        const json = JSON.stringify(artifact.content, null, 2);
+        const blob = new Blob([json], { type: "application/json" });
+        return {
+          filename: `customer-${artifact.content.id}.json`,
+          blob
+        };
+      }
+    };
+
+    artifactRegistry.register("customer", CustomerRenderer);
+
+    const chatEl = document.querySelector("ai-chat");
+    const composerEl = document.querySelector("ai-composer");
+
+    // Demo scenarios
+    const demos = {
+      streaming: () => [
+        { type: "session.started" },
+        { type: "message.started", messageId: "m1" },
+        { type: "text.delta", messageId: "m1", text: "Streaming " },
+        { type: "text.delta", messageId: "m1", text: "is " },
+        { type: "text.delta", messageId: "m1", text: "awesome! " },
+        { type: "text.delta", messageId: "m1", text: "Each " },
+        { type: "text.delta", messageId: "m1", text: "token " },
+        { type: "text.delta", messageId: "m1", text: "appears " },
+        { type: "text.delta", messageId: "m1", text: "instantly." },
+        { type: "message.completed", messageId: "m1" },
+        { type: "session.completed" }
+      ],
+
+      markdown: () => [
+        { type: "session.started" },
+        { type: "message.started", messageId: "m1" },
+        { type: "text.delta", messageId: "m1", text: "# Markdown Support\n\n" },
+        { type: "text.delta", messageId: "m1", text: "Here's what we can render:\n\n" },
+        { type: "text.delta", messageId: "m1", text: "- **Bold text** with emphasis\n" },
+        { type: "text.delta", messageId: "m1", text: "- *Italic text* too\n" },
+        { type: "text.delta", messageId: "m1", text: "- `inline code` blocks\n\n" },
+        { type: "text.delta", messageId: "m1", text: "## Code Blocks\n\n```javascript\n" },
+        { type: "text.delta", messageId: "m1", text: "const result = await fetch('/api/data');\n" },
+        { type: "text.delta", messageId: "m1", text: "console.log(result);\n```\n\n" },
+        { type: "text.delta", messageId: "m1", text: "[Links work too!](https://example.com)" },
+        { type: "message.completed", messageId: "m1" },
+        { type: "session.completed" }
+      ],
+
+      reasoning: () => [
+        { type: "session.started" },
+        { type: "message.started", messageId: "m1" },
+        { type: "reasoning.delta", messageId: "m1", text: "Let me think about this " },
+        { type: "reasoning.delta", messageId: "m1", text: "step by step.\n" },
+        { type: "reasoning.delta", messageId: "m1", text: "First, I need to understand the question...\n" },
+        { type: "reasoning.delta", messageId: "m1", text: "Then consider the options...\n" },
+        { type: "reasoning.delta", messageId: "m1", text: "Finally, formulate a response." },
+        { type: "text.delta", messageId: "m1", text: "After careful consideration, " },
+        { type: "text.delta", messageId: "m1", text: "the answer is that reasoning " },
+        { type: "text.delta", messageId: "m1", text: "helps me provide better responses!" },
+        { type: "message.completed", messageId: "m1" },
+        { type: "session.completed" }
+      ],
+
+      tools: () => [
+        { type: "session.started" },
+        { type: "message.started", messageId: "m1" },
+        { type: "text.delta", messageId: "m1", text: "Let me search for that information...\n\n" },
+        { type: "tool.call.started", id: "t1", name: "search_web", input: { query: "AI trends 2024" } },
+        { type: "tool.call.completed", id: "t1", output: { results: 42, sources: ["arxiv.org", "github.com"] } },
+        { type: "text.delta", messageId: "m1", text: "I found 42 relevant results about AI trends in 2024. " },
+        { type: "text.delta", messageId: "m1", text: "The main topics include large language models, " },
+        { type: "text.delta", messageId: "m1", text: "multimodal AI, and efficiency improvements." },
+        { type: "message.completed", messageId: "m1" },
+        { type: "session.completed" }
+      ],
+
+      approval: () => [
+        { type: "session.started" },
+        { type: "message.started", messageId: "m1" },
+        { type: "text.delta", messageId: "m1", text: "I'll delete that file for you. " },
+        { type: "tool.call.started", id: "t1", name: "delete_file", input: { path: "/data/archive.zip", size: "2.4GB" } },
+        { type: "tool.approval.required", id: "t1", reason: "This will permanently delete 2.4GB file" },
+        // Simulate approval after delay
+        { type: "tool.approved", id: "t1" },
+        { type: "text.delta", messageId: "m1", text: "File deletion approved. " },
+        { type: "tool.call.completed", id: "t1", output: { deleted: true, size: "2.4GB" } },
+        { type: "text.delta", messageId: "m1", text: "Successfully deleted archive.zip." },
+        { type: "message.completed", messageId: "m1" },
+        { type: "session.completed" }
+      ],
+
+      artifacts: () => [
+        { type: "session.started" },
+        { type: "message.started", messageId: "m1" },
+        { type: "text.delta", messageId: "m1", text: "Here's your customer analysis:\n\n" },
+        {
+          type: "artifact.created",
+          artifact: {
+            id: "a1",
+            type: "table",
+            title: "Customer Q3 Performance",
+            content: [
+              { name: "Acme Corp", revenue: "$4.2M", growth: "12%", status: "Active" },
+              { name: "Globex Inc", revenue: "$2.8M", growth: "8%", status: "Active" },
+              { name: "Initech", revenue: "$1.9M", growth: "15%", status: "Growing" }
+            ]
+          }
+        },
+        { type: "text.delta", messageId: "m1", text: "\nSummary:\n\n" },
+        {
+          type: "artifact.created",
+          artifact: {
+            id: "a2",
+            type: "json",
+            title: "Analysis Summary",
+            content: {
+              totalCustomers: 3,
+              avgRevenue: "$2.97M",
+              avgGrowth: "11.67%",
+              topPerformer: "Initech",
+              recommendation: "Focus on Initech for market expansion"
+            }
+          }
+        },
+        { type: "text.delta", messageId: "m1", text: "All done!" },
+        { type: "message.completed", messageId: "m1" },
+        { type: "session.completed" }
+      ],
+
+      custom: () => [
+        { type: "session.started" },
+        { type: "message.started", messageId: "m1" },
+        { type: "text.delta", messageId: "m1", text: "Here's your customer profile:\n\n" },
+        {
+          type: "artifact.created",
+          artifact: {
+            id: "a1",
+            type: "customer",
+            title: "Customer Profile - Acme Corp",
+            content: {
+              id: "cust_123",
+              name: "Acme Corporation",
+              email: "contact@acme.com",
+              plan: "Enterprise",
+              mrr: 45000,
+              health: "excellent"
+            }
+          }
+        },
+        { type: "text.delta", messageId: "m1", text: "This is a custom renderer demo!" },
+        { type: "message.completed", messageId: "m1" },
+        { type: "session.completed" }
+      ]
+
+      error: () => [
+        { type: "session.started" },
+        { type: "message.started", messageId: "m1" },
+        { type: "text.delta", messageId: "m1", text: "Attempting to process..." },
+        { type: "error.occurred", message: "API rate limit exceeded. Please try again in 60 seconds.", code: "RATE_LIMIT" },
+        { type: "session.completed" }
+      ],
+
+      long: () => [
+        { type: "session.started" },
+        { type: "message.started", messageId: "m1" },
+        { type: "text.delta", messageId: "m1", text: "# Complete Guide\n\n" },
+        { type: "text.delta", messageId: "m1", text: "## Chapter 1: Introduction\n\n" },
+        { type: "text.delta", messageId: "m1", text: "This is a long response to demonstrate how " },
+        { type: "text.delta", messageId: "m1", text: "the component handles large amounts of content. " },
+        { type: "text.delta", messageId: "m1", text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n\n" },
+        { type: "text.delta", messageId: "m1", text: "## Chapter 2: Details\n\n" },
+        { type: "text.delta", messageId: "m1", text: "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " },
+        { type: "text.delta", messageId: "m1", text: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.\n\n" },
+        { type: "text.delta", messageId: "m1", text: "- Point 1: Auto-scroll keeps content visible\n" },
+        { type: "text.delta", messageId: "m1", text: "- Point 2: Scroll up to pause updates\n" },
+        { type: "text.delta", messageId: "m1", text: "- Point 3: New response indicator shows up\n\n" },
+        { type: "text.delta", messageId: "m1", text: "## Chapter 3: Conclusion\n\n" },
+        { type: "text.delta", messageId: "m1", text: "Duis aute irure dolor in reprehenderit in voluptate velit esse " },
+        { type: "text.delta", messageId: "m1", text: "cillum dolore eu fugiat nulla pariatur." },
+        { type: "message.completed", messageId: "m1" },
+        { type: "session.completed" }
+      ]
+    };
+
+    async function runDemo(demoName) {
+      if (demoName === "clear") {
+        chatEl.clear();
+        return;
+      }
+
+      const events = demos[demoName]?.();
+      if (!events) return;
+
+      const transport = createMockTransport(events);
+      const session = createAISession({ transport });
+
+      // Simulate user message
+      const userMessage = {
+        streaming: "Tell me about streaming",
+        markdown: "How do you render markdown?",
+        reasoning: "Explain your reasoning",
+        tools: "Search for AI trends in 2024",
+        approval: "Delete archive.zip for me",
+        artifacts: "Analyze our customers",
+        custom: "Show me a customer profile",
+        error: "Try something that fails",
+        long: "Write a long response"
+      }[demoName];
+
+      chatEl.session = session;
+      await session.send(userMessage || "Hello");
+    }
+
+    // Make runDemo globally accessible
+    window.runDemo = runDemo;
+
+    console.log("🚀 AI UI Playground ready!");
+    console.log("Type a message or click a demo button to see the component in action.");
+  </script>
+</body>
+</html>
