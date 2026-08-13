@@ -56,6 +56,58 @@ class AIWorkspaceElement extends HTMLElementBase {
   }
 
   /**
+   * Register a plugin with workspace-local renderers
+   */
+  use(plugin) {
+    if (!plugin || !plugin.name) {
+      throw new Error("Plugin must have a name");
+    }
+
+    // Get or create registry (lazy init)
+    if (!this._registry) {
+      const { artifactRegistry, toolRegistry } = require("@ai-ui/core");
+      this._registry = {
+        artifacts: artifactRegistry,
+        tools: toolRegistry
+      };
+    }
+
+    // Register artifact renderers
+    if (plugin.artifacts && Array.isArray(plugin.artifacts)) {
+      plugin.artifacts.forEach((artifact) => {
+        if (artifact.type && artifact.renderer) {
+          this._registry.artifacts.register(artifact.type, artifact.renderer);
+        }
+      });
+    }
+
+    // Register tool renderers
+    if (plugin.tools && Array.isArray(plugin.tools)) {
+      plugin.tools.forEach((tool) => {
+        if (tool.name && tool.renderer) {
+          this._registry.tools.register(tool.name, tool.renderer);
+        }
+      });
+    }
+
+    return this;
+  }
+
+  /**
+   * Access workspace renderer registry (for direct registration)
+   */
+  get registry() {
+    if (!this._registry) {
+      const { artifactRegistry, toolRegistry } = require("@ai-ui/core");
+      this._registry = {
+        artifacts: artifactRegistry,
+        tools: toolRegistry
+      };
+    }
+    return this._registry;
+  }
+
+  /**
    * Set a pre-created session
    */
   set session(session) {
